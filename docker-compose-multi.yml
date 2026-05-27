@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ecom-monolith-multi:
+    container_name: ecom-monolith-multi
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+    ports:
+      - "8089:8089" # Changé ici à 8089 pour éviter les conflits si tu lances les deux
+    environment:
+      - SERVER_PORT=8089
+      - SPRING_APPLICATION_NAME=ecom-monolith-multi
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:ecom-db
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+    restart: unless-stopped

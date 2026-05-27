@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ecom-monolith-mono:
+    container_name: ecom-monolith-mono
+    build:
+      context: .
+      dockerfile: Dockerfile.mono
+    ports:
+      - "8088:8088"
+    environment:
+      - SERVER_PORT=8088
+      - SPRING_APPLICATION_NAME=ecom-monolith-mono
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:ecom-db
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+    restart: unless-stopped

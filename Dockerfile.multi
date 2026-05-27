@@ -1,0 +1,41 @@
+# ==========================================
+# ÉTAPE 1 : Build de l'application (Compilation)
+# ==========================================
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+WORKDIR /build
+
+# 1. Copie des fichiers de configuration Maven pour mettre en cache les dépendances
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+
+# Astuce pour télécharger et mettre en cache les dépendances (évite de tout retélécharger à chaque modif de code)
+RUN ./mvnw dependency:go-offline -B
+
+# 2. Copie du code source et build de l'application (sans exécuter les tests)
+COPY src/ src/
+RUN ./mvnw clean package -DskipTests -B
+
+# ==========================================
+# ÉTAPE 2 : Image finale de production (Runtime)
+# ==========================================
+FROM eclipse-temurin:21-jre-alpine
+
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+WORKDIR /app
+
+# Configuration des variables d'environnement par défaut
+ENV SERVER_PORT=8088 \
+    SPRING_APPLICATION_NAME=ecom-monolith \
+    SPRING_DATASOURCE_URL=jdbc:h2:mem:ecom-db \
+    SPRING_H2_CONSOLE_ENABLED=true \
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+
+# Récupération sélective de l'artefact généré à l'Étape 1
+COPY --from=builder /build/target/ecom-monolith-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE ${SERVER_PORT}
+
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${SERVER_PORT} --spring.application.name=${SPRING_APPLICATION_NAME} --spring.datasource.url=${SPRING_DATASOURCE_URL} --spring.h2.console.enabled=${SPRING_H2_CONSOLE_ENABLED} --management.endpoints.web.exposure.include=${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE}"]

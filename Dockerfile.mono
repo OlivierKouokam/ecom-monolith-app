@@ -1,0 +1,24 @@
+# Étape d'exécution (Runtime) basée sur un JRE léger (Java 21)
+FROM eclipse-temurin:21-jre-alpine
+
+# Création d'un groupe et d'un utilisateur non-root pour la sécurité
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+WORKDIR /app
+
+# Déclaration des variables d'environnement par défaut (surchargées au runtime)
+ENV SERVER_PORT=8088 \
+    SPRING_APPLICATION_NAME=ecom-monolith \
+    SPRING_DATASOURCE_URL=jdbc:h2:mem:ecom-db \
+    SPRING_H2_CONSOLE_ENABLED=true \
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+
+# Copie du JAR généré localement
+COPY target/ecom-monolith-0.0.1-SNAPSHOT.jar app.jar
+
+# Exposition du port
+EXPOSE ${SERVER_PORT}
+
+# Lancement de l'application en utilisant les variables d'environnement
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${SERVER_PORT} --spring.application.name=${SPRING_APPLICATION_NAME} --spring.datasource.url=${SPRING_DATASOURCE_URL} --spring.h2.console.enabled=${SPRING_H2_CONSOLE_ENABLED} --management.endpoints.web.exposure.include=${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE}"]
